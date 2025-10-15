@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+upstash_redis
+langchain 
+langchain_redis
+langchain_community 
+langchain-groq
+python-dotenv
+python-multipart
