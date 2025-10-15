@@ -1,5 +1,5 @@
 
-daily_planer_prompt="""
+daily_workout_prompt = """
 Generate a workout for **Day {user_inputs['day']} (Week {user_inputs['week']}, {user_inputs['day_of_week']})**.
 
 User Profile:
@@ -20,7 +20,7 @@ Constraints:
 Return strictly as JSON (array of exercise objects).
 """
 
-motivation_prompt=prompt = """
+motivation_prompt = """
 Generate a short, powerful motivational message (max 2 sentences) for day {user_inputs['day']} of a workout plan.
 
 User Profile:
@@ -34,7 +34,8 @@ The message should:
 - Connect to their mission ({user_inputs['mission']})
 - Be unique and not repetitive
 
-Return ONLY the motivational message, nothing else."""
+Return ONLY the motivational message, nothing else.
+"""
 
 system_prompt = """
 You are an expert world-class fitness coach and motivational trainer.
