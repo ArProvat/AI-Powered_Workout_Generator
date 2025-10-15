@@ -1,5 +1,5 @@
 
-from ai_component.prompts.prompts import system_prompt, motivation_prompt
+from ai_component.prompts.prompts import motivation_system_prompt, motivation_prompt
 from langchain.prompts import ChatPromptTemplate
 from ai_component.LLMs.Groq_llm import llm
 from langchain_core.output_parsers import StrOutputParser
@@ -9,7 +9,7 @@ def get_motivation_chain(user_input: dict):
     try:
         prompt = ChatPromptTemplate.from_messages([
         ("system",
-            system_prompt
+            motivation_system_prompt
         ),
         ("human",
             motivation_prompt.format(**user_input)

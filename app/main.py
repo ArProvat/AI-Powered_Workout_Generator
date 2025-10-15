@@ -4,11 +4,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_component.chains.generate_daily_workout import get_daily_workout_chain
 from ai_component.chains.genarate_motivation import get_motivation_chain
 from pydantic import BaseModel, Field, ConfigDict
+from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from enum import Enum
+import datetime
 
 import os
 import json
+ 
+import datetime
+
+current_date = datetime.date.today()
+day_name = current_date.strftime("%A")
+
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -71,10 +80,6 @@ class DailyWorkout(BaseModel):
     workout_plan: List[dict]
     motivational_text: str
 
-class MonthlyWorkoutResponse(BaseModel):
-    user_profile: dict
-    monthly_plan: List[DailyWorkout]
-    summary: str
 
 
 # Endpoints
@@ -88,19 +93,21 @@ def root():
             "health": "/health (GET)"
         }
     }
-@app.post("/generate-workout", response_model=MonthlyWorkoutResponse)
-async def generate_workout(request: WorkoutRequest):
-    try:
+@app.post("/generate-workout-stream")
+async def generate_workout_stream_post(request: WorkoutRequest):
+    """
+    Stream 30 days of workout plans progressively.
+    This is the approach for SSE with complex data.
+    """
+    async def event_stream():
         user_profile = {
             "mission": request.mission.value,
             "time_commitment": request.time_commitment.value,
             "gear": request.gear.value,
             "squad": request.squad.value    
         }
-        monthly_plan = []
-        summary = ""
         
-        for day in range(1,31):
+        for day in range(1, 3):
             try:
                 day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][(day - 1) % 7]
                 week = (day - 1) // 7 + 1
@@ -112,40 +119,43 @@ async def generate_workout(request: WorkoutRequest):
                     **user_profile
                 }
                 
-                # Generate daily workout plan
-                workout_response = get_daily_workout_chain(user_input, session_id="user_1")
-                workout_plan = json.loads(workout_response)
-                
-                # Generate motivational text
+                # Generate workout and motivation
+                workout_response = get_daily_workout_chain(user_input, session_id="stream_user")
                 motivational_text = get_motivation_chain(user_input)
                 
-                daily_workout = DailyWorkout(
-                    day=day,
-                    workout_plan=workout_plan,
-                    motivational_text=motivational_text
-                )
-                monthly_plan.append(daily_workout)
-            except Exception as e:
-                monthly_plan.append(DailyWorkout(
-                    day=day,
-                    workout_plan=[
-                        f"Warm-up: Dynamic stretching - 5 mins",
-                        f"Main workout: Focus on {request.mission.value}",
-                        f"Cool-down: Static stretching - 5 mins"
-                    ],
-                    motivational_text=f"Day {day}: Stay committed to your journey!"
-                ))
-        
-        summary = f"Generated a 30-day workout plan focused on {request.mission.value} with {request.gear.value} equipment."
-        return MonthlyWorkoutResponse(
-            user_profile=user_profile,
-            monthly_plan=monthly_plan,
-            summary=summary
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating workout plan: {str(e)}")
+                # Parse workout response
+                try:
+                    workout_plan = json.loads(workout_response)
+                except json.JSONDecodeError as e:
+                    print(f"JSON parsing error for day {day}: {e}")
+                    workout_plan = {"error": "Failed to parse workout plan"}
+                
+                day_json = {
+                    "day": day,
+                    "workout_plan": workout_plan,
+                    "motivational_text": motivational_text
+                }
 
-@app.post("/generate-workout-debug", response_model=DailyWorkout)
+                # Send progress update
+                yield f"data: {json.dumps(day_json)}\n\n"
+
+            except Exception as e:
+                print(f"Error generating workout for day {day}: {e}")
+                yield f"data: {json.dumps({'day': day, 'error': str(e)})}\n\n"
+        
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_stream(), 
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  
+        }
+    )
+
+@app.post("/generate_daily_workout", response_model=DailyWorkout)
 async def generate_daily_workout(request: WorkoutRequest,day: int = 1,):
     """    Generate a single day's workout plan."""
     try:
@@ -159,7 +169,7 @@ async def generate_daily_workout(request: WorkoutRequest,day: int = 1,):
         session_id = "user_1"
          
         day = day
-        day_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][(day - 1) % 7]
+        day_of_week = day_name
         week = (day - 1) // 7 + 1
         
         user_input = {
