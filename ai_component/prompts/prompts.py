@@ -1,12 +1,11 @@
-
 daily_workout_prompt = """
-Generate a workout for **Day {user_inputs['day']} (Week {user_inputs['week']}, {user_inputs['day_of_week']})**.
+Generate a workout for **Day {day} (Week {week}, {day_of_week})**.
 
 User Profile:
-- Goal: {user_inputs['mission']}
-- Time: {user_inputs['time_commitment']}
-- Gear: {user_inputs["gear"]}
-- Squad Type: {user_inputs['squad']}
+- Goal: {mission}
+- Time: {time_commitment}
+- Gear: {gear}
+- Squad Type: {squad}
 
 Constraints:
 1. Fit within time limit
@@ -21,17 +20,17 @@ Return strictly as JSON (array of exercise objects).
 """
 
 motivation_prompt = """
-Generate a short, powerful motivational message (max 2 sentences) for day {user_inputs['day']} of a workout plan.
+Generate a short, powerful motivational message (max 2 sentences) for Day {day} (Week {week}, {day_of_week}) of a workout plan.
 
 User Profile:
-- Mission: {user_inputs['mission']}
-- Squad: {user_inputs['squad']}
-- Time: {user_inputs['time_commitment']}
+- Mission: {mission}
+- Squad: {squad}
+- Time: {time_commitment}
 
 The message should:
 - Be inspiring and energetic
-- Reference their squad identity ({user_inputs['squad']})
-- Connect to their mission ({user_inputs['mission']})
+- Reference their squad identity ({squad})
+- Connect to their mission ({mission})
 - Be unique and not repetitive
 
 Return ONLY the motivational message, nothing else.

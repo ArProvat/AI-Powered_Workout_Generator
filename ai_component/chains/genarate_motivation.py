@@ -6,10 +6,19 @@ from langchain_core.output_parsers import StrOutputParser
 
 def get_motivation_chain(user_input: dict):
     """Create a chain to generate motivational messages."""
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", motivation_prompt.format(user_inputs=user_input))
+    try:
+        prompt = ChatPromptTemplate.from_messages([
+        ("system",
+            system_prompt
+        ),
+        ("human",
+            motivation_prompt.format(**user_input)
+        ),
     ])
-
-    chain = prompt | llm | StrOutputParser()
-    return chain.invoke(user_input)
+        chain = prompt | llm | StrOutputParser()
+        motivational_text = chain.invoke({})
+        print(f"Motivational Text: {motivational_text}")
+        return motivational_text
+    except Exception as e:
+       print(f"Error in get_motivation_chain: {e}")
+       return str(e)
