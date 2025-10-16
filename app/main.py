@@ -1,8 +1,8 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from ai_component.chains.generate_daily_workout import get_daily_workout_chain
 from ai_component.chains.genarate_motivation import get_motivation_chain
+from ai_component.chains.generate_daily_workout import get_daily_workout_chain
 from pydantic import BaseModel, Field, ConfigDict
 from fastapi.responses import StreamingResponse
 from typing import List, Optional
